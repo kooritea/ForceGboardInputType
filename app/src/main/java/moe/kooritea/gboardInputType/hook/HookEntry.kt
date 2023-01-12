@@ -37,21 +37,44 @@ class HookEntry : IYukiHookXposedInit {
                         param(VagueType, BooleanType)
                     }
                     beforeHook {
-                        (args[0]!! as EditorInfo).let {
-                            var result = it.inputType
-                            result = replaceFlag(result, EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD, EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT, TYPE_MASK_VARIATION)
-                            result = replaceFlag(result, EditorInfo.TYPE_TEXT_VARIATION_PASSWORD, 0, TYPE_MASK_VARIATION)
-                            result = replaceFlag(result, EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD, 0, TYPE_MASK_VARIATION)
-                            result = replaceFlag(result, 0, EditorInfo.TYPE_CLASS_TEXT, TYPE_MASK_CLASS)
-                            if(result != it.inputType){
-                                XposedBridge.log("[ForceGboardInputType][" + it.packageName + "] inputType: " + it.inputType + "->" + result)
-                                it.inputType = result
-                            }else{
-                                XposedBridge.log("[ForceGboardInputType][" + it.packageName + "] inputType: " + it.inputType)
-                            }
-                        }
+                        hooker((args[0]!! as EditorInfo), false)
                     }
                 }
+            }
+            searchClass {
+                extends<InputMethodService>()
+                method {
+                    name = "onStartInput"
+                    param(VagueType, BooleanType)
+                }.count(num = 1)
+            }.get()?.hook {
+                injectMember {
+                    method {
+                        name = "onStartInput"
+                        param(VagueType, BooleanType)
+                    }
+                    beforeHook {
+                        hooker((args[0]!! as EditorInfo), true)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun hooker(editorInfo: EditorInfo, log: Boolean) {
+        var result = editorInfo.inputType
+        result = replaceFlag(result, EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD, EditorInfo.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT, TYPE_MASK_VARIATION)
+        result = replaceFlag(result, EditorInfo.TYPE_TEXT_VARIATION_PASSWORD, 0, TYPE_MASK_VARIATION)
+        result = replaceFlag(result, EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD, 0, TYPE_MASK_VARIATION)
+        result = replaceFlag(result, 0, EditorInfo.TYPE_CLASS_TEXT, TYPE_MASK_CLASS)
+        if(result != editorInfo.inputType){
+            if(log){
+                XposedBridge.log("[ForceGboardInputType][" + editorInfo.packageName + "] inputType: " + editorInfo.inputType + "->" + result)
+            }
+            editorInfo.inputType = result
+        }else{
+            if(log){
+                XposedBridge.log("[ForceGboardInputType][" + editorInfo.packageName + "] inputType: " + editorInfo.inputType)
             }
         }
     }
