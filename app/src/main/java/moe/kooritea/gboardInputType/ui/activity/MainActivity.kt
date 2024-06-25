@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.core.view.isVisible
 import com.highcapable.yukihookapi.YukiHookAPI
+import com.highcapable.yukihookapi.YukiHookAPI.Status.Executor
+import com.highcapable.yukihookapi.hook.factory.prefs
 import moe.kooritea.gboardInputType.BuildConfig
 import moe.kooritea.gboardInputType.R
 import moe.kooritea.gboardInputType.databinding.ActivityMainBinding
@@ -21,6 +23,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         binding.hideIconInLauncherSwitch.isChecked = isLauncherIconShowing.not()
         binding.hideIconInLauncherSwitch.setOnCheckedChangeListener { button, isChecked ->
             if (button.isPressed) hideOrShowLauncherIcon(isChecked)
+        }
+        binding.debugSwitch.isChecked = prefs().getBoolean("debug_mode", false)
+        binding.debugSwitch.setOnCheckedChangeListener { button, isChecked ->
+            if (button.isPressed) {
+                prefs().edit { putBoolean("debug_mode", isChecked) }
+            }
         }
         binding.titleGithubIcon.setOnClickListener {
             startActivity(Intent().apply {
@@ -87,9 +95,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         )
         binding.mainTextApiWay.isVisible = YukiHookAPI.Status.isModuleActive
         when {
-            YukiHookAPI.Status.executorVersion > 0 ->
+            Executor.apiLevel > 0 ->
                 binding.mainTextApiWay.text =
-                    "Activated by ${YukiHookAPI.Status.executorName} API ${YukiHookAPI.Status.executorVersion}"
+                    "Activated by ${Executor.name} API ${Executor.apiLevel}"
             YukiHookAPI.Status.isTaiChiModuleActive -> binding.mainTextApiWay.text = "Activated by TaiChi"
             else -> binding.mainTextApiWay.text = "Activated by anonymous"
         }

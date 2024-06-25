@@ -54,7 +54,7 @@ class HookEntry : IYukiHookXposedInit {
                         param(VagueType, BooleanType)
                     }
                     beforeHook {
-                        hooker((args[0]!! as EditorInfo), true)
+                        hooker((args[0]!! as EditorInfo), prefs.getBoolean("debug_mode", false))
                     }
                 }
             }
